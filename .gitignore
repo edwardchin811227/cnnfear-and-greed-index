@@ -4,3 +4,4 @@ logs/
 cache/
 .trae/
 *.log
+_verify/

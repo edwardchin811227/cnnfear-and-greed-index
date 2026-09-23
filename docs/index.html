@@ -98,6 +98,37 @@
     .canvas-box.small { height: 220px; padding: 4px 18px 10px; }
     #chart, #zchart { width: 100%; height: 100%; }
 
+    .chart-holder { position: relative; width: 100%; height: 100%; }
+
+    /* custom tooltip card */
+    .tt {
+      position: absolute;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .12s ease;
+      z-index: 20;
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      box-shadow: 0 12px 26px rgba(21, 33, 45, 0.16);
+      padding: 10px 12px;
+      min-width: 196px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text);
+    }
+    .tt .d { font-weight: 700; margin-bottom: 7px; font-size: 12.5px; }
+    .tt .r { display: flex; justify-content: space-between; gap: 18px; }
+    .tt .r span { color: var(--muted); }
+    .tt .r b { font-variant-numeric: tabular-nums; }
+    .tt .r.v b { color: #111111; }
+    .tt .r.m b { color: var(--accent); }
+    .tt .r.u b { color: var(--greed); }
+    .tt .r.l b { color: var(--fear); }
+    .tt .sep { height: 1px; background: #e8eef3; margin: 7px 0 6px; }
+    .tt .pos { color: var(--muted); font-size: 11.5px; }
+    .tt .pos b { color: var(--text); }
+
     section { padding: 16px 22px; border-top: 1px solid var(--line); }
     section h2 {
       margin: 0 0 10px;
@@ -189,7 +220,10 @@
     </div>
 
     <div class="canvas-box">
-      <canvas id="chart"></canvas>
+      <div class="chart-holder">
+        <canvas id="chart"></canvas>
+        <div class="tt" id="ttMain"></div>
+      </div>
     </div>
     <div class="canvas-box small">
       <canvas id="zchart"></canvas>
@@ -259,6 +293,7 @@
     const DEF = { fear: "恐懼", greed: "貪婪", neutral: "中性" };
 
     let fullRows = [];
+    let viewRows = [];
     let chart = null, zchart = null;
     let viewStart = 0, viewEnd = 0;
 
@@ -286,6 +321,57 @@
       const s = Math.max(0, Math.min(start, fullRows.length - 1));
       const e = Math.max(s, Math.min(end, fullRows.length - 1));
       return fullRows.slice(s, e + 1);
+    }
+
+    // ---------- custom tooltip: shows the ±1σ / ±2σ levels for that date ----------
+    const ttMain = $("ttMain");
+
+    const fmt = (v, d = 1) =>
+      (v === null || v === undefined || Number.isNaN(v)) ? "–" : Number(v).toFixed(d);
+
+    function sigmaPosition(row) {
+      if (row.mean === null || row.mean === undefined || !row.std) return "資料不足";
+      const k = (row.value - row.mean) / row.std;
+      const a = Math.abs(k);
+      if (a < 1) return "位於均值 ±1σ 之內（正常波動）";
+      const s = k >= 0 ? "＋" : "−";
+      if (a < 2) return `位於 ${s}1σ 與 ${s}2σ 之間`;
+      if (a < 3) return `位於 ${s}2σ 與 ${s}3σ 之間（統計上極端）`;
+      return `超出 ${s}3σ`;
+    }
+
+    function buildTT(row) {
+      if (!row) return "";
+      const k = classKey(row.classification);
+      const line = (cls, label, val) =>
+        `<div class="r ${cls}"><span>${label}</span><b>${val}</b></div>`;
+      return `<div class="d">${row.date}`
+        + `<span class="tag ${k}" style="margin-left:6px">${classZh(row.classification)}</span></div>`
+        + line("v", "指數", fmt(row.value))
+        + line("m", "252日均值", fmt(row.mean))
+        + `<div class="sep"></div>`
+        + line("u", "＋2σ", fmt(row.upper2))
+        + line("u", "＋1σ", fmt(row.upper1))
+        + line("l", "−1σ", fmt(row.lower1))
+        + line("l", "−2σ", fmt(row.lower2))
+        + `<div class="sep"></div>`
+        + `<div class="pos">目前位置：<b>${sigmaPosition(row)}</b></div>`;
+    }
+
+    function externalMainTT(context) {
+      const { chart: c, tooltip } = context;
+      if (tooltip.opacity === 0 || !tooltip.dataPoints || !tooltip.dataPoints.length) {
+        ttMain.style.opacity = 0;
+        return;
+      }
+      const row = viewRows[tooltip.dataPoints[0].dataIndex];
+      ttMain.innerHTML = buildTT(row);
+      ttMain.style.transform = tooltip.caretX < c.width / 2
+        ? "translate(14px, -50%)"
+        : "translate(calc(-100% - 14px), -50%)";
+      ttMain.style.left = tooltip.caretX + "px";
+      ttMain.style.top = tooltip.caretY + "px";
+      ttMain.style.opacity = 1;
     }
 
     // ---------- main chart ----------
@@ -343,12 +429,7 @@
                 filter: (item, data) => !data.datasets[item.datasetIndex].skipLegend
               }
             },
-            tooltip: {
-              filter: (c) => !c.dataset.skipTooltip,
-              callbacks: {
-                label: (c) => `${c.dataset.label}: ${c.parsed.y === null ? "-" : c.parsed.y.toFixed(1)}`
-              }
-            }
+            tooltip: { enabled: false, external: externalMainTT }
           },
           scales: {
             x: { ticks: { maxTicksLimit: 12, autoSkip: true } },
@@ -410,7 +491,7 @@
 
     // ---------- panels ----------
     function renderLookbacks(list, stats) {
-      const tb = $("#lookTable").querySelector("tbody");
+      const tb = $("lookTable").querySelector("tbody");
       if (!list || !list.length) { tb.innerHTML = '<tr><td colspan="7">無資料</td></tr>'; return; }
       tb.innerHTML = list.map(r => {
         const cls = r.z <= -1 ? "neg" : (r.z >= 1 ? "pos" : "neu");
@@ -422,7 +503,7 @@
     }
 
     function renderRecent(rows) {
-      const tb = $("#recentTable").querySelector("tbody");
+      const tb = $("recentTable").querySelector("tbody");
       const tail = rows.slice(-15).reverse();
       if (!tail.length) { tb.innerHTML = '<tr><td colspan="5">無資料</td></tr>'; return; }
       tb.innerHTML = tail.map(r => {
@@ -479,6 +560,7 @@
 
     function refresh() {
       const rows = pickRows(viewStart, viewEnd);
+      viewRows = rows;
       drawMain(rows);
       drawZ(rows);
     }
