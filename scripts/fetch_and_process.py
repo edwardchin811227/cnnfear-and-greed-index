@@ -314,11 +314,17 @@ def _to_json_text(payload: dict[str, object]) -> str:
 
 
 def _write_if_changed(path: Path, content: str) -> bool:
-    existing = path.read_text(encoding="utf-8") if path.exists() else None
+    """只在內容變動時寫檔，並固定用 LF —— 讓 Windows 與 Docker(Linux) 兩邊
+    寫出的檔案逐位元一致，不會因為換行符互相觸發無意義的 commit。"""
+    existing = None
+    if path.exists():
+        with open(path, "r", encoding="utf-8", newline="") as fh:
+            existing = fh.read()
     if existing == content:
         return False
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
+    with open(path, "w", encoding="utf-8", newline="") as fh:
+        fh.write(content)
     return True
 
 
