@@ -287,7 +287,9 @@ def _build_live(live: dict, stats: dict) -> dict[str, object]:
         "value": _value_or_none(score, digits=2),
         "classification": rating,
         "classification_zh": RATING_ZH.get(rating, rating),
-        "as_of": live.get("timestamp"),
+        # 刻意用「已定稿的資料日期」而不是 CNN 回傳的請求時間戳 ——
+        # 後者每次呼叫都不同，會讓 JSON 每天都產生無意義的變動。
+        "as_of": stats["settled_date"],
     }
     for src, dst in (
         ("previous_close", "previous_close"),
@@ -358,7 +360,6 @@ def main() -> int:
         "source": "CNN Business — Fear & Greed Index",
         "window": WINDOW,
         "z_levels": list(Z_LEVELS),
-        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "live": live,
         "stats": stats,
         "lookbacks": lookbacks,

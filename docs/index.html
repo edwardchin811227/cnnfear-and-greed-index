@@ -604,9 +604,8 @@
       $("pillMs").textContent = `${st.mean} ± ${st.sd}`;
       $("firstDate").textContent = st.first || fullRows[0].date;
 
-      const asOf = (live.as_of || payload.generated_utc || "").replace("T", " ").replace("Z", " UTC");
       $("metaText").innerHTML =
-        `資料日期：${payload.updated}　·　讀數時間：${asOf}<br>`
+        `資料日期：${payload.updated}　（CNN 於 00:00 UTC 定稿）<br>`
         + `區間 ${st.first} ~ ${st.last}　·　共 ${st.n} 個交易日`;
 
       renderLookbacks(payload.lookbacks, st);
