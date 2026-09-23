@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CNN Fear & Greed Index - 252MA ±σ</title>
+  <style>
+    :root {
+      --bg: #f7f7f5;
+      --panel: #ffffff;
+      --text: #15212d;
+      --muted: #5f6f7b;
+      --line: #d3dce3;
+      --accent: #2d5d7b;
+      --up: 74, 173, 97;
+      --down: 217, 83, 79;
+      --fear: #c0392b;
+      --neutral: #6b7785;
+      --greed: #2e8b57;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 10% -10%, #dde8f0 0, transparent 42%), var(--bg);
+      color: var(--text);
+      font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+    }
+
+    .wrap {
+      width: 1200px;
+      max-width: calc(100% - 24px);
+      margin: 22px auto;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(21, 33, 45, 0.08);
+      overflow: hidden;
+    }
+
+    header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h1 { margin: 0; font-size: 22px; letter-spacing: 0.2px; }
+    .meta { color: var(--muted); font-size: 13px; text-align: right; }
+
+    .summary {
+      display: flex;
+      gap: 14px;
+      padding: 14px 22px;
+      border-bottom: 1px solid var(--line);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 7px 12px;
+      font-size: 13px;
+      background: #fbfdff;
+      white-space: nowrap;
+    }
+
+    .pill b { font-size: 15px; }
+    .pill .k { color: var(--muted); margin-right: 6px; }
+
+    .toolbar {
+      padding: 10px 22px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .toolbar button {
+      border: 1px solid var(--line);
+      background: #ffffff;
+      border-radius: 8px;
+      padding: 6px 14px;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 600;
+      font-family: inherit;
+    }
+
+    .toolbar button.active { background: var(--accent); border-color: var(--accent); color: #ffffff; }
+
+    .canvas-box { padding: 16px 18px 4px; height: 520px; }
+    .canvas-box.small { height: 220px; padding: 4px 18px 10px; }
+    #chart, #zchart { width: 100%; height: 100%; }
+
+    section { padding: 16px 22px; border-top: 1px solid var(--line); }
+    section h2 {
+      margin: 0 0 10px;
+      font-size: 15px;
+      letter-spacing: 0.2px;
+    }
+
+    .read { font-size: 13px; line-height: 1.85; color: #33414f; }
+    .read li { margin-bottom: 3px; }
+    .read code {
+      background: #eef3f7; padding: 1px 5px; border-radius: 4px;
+      font-family: Consolas, "Courier New", monospace; font-size: 12px;
+    }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 7px 10px; border-bottom: 1px solid #e8eef3; text-align: right; }
+    th:first-child, td:first-child { text-align: left; }
+    th { color: var(--muted); font-weight: 600; font-size: 12px; background: #fafcfd; }
+    tr:last-child td { border-bottom: none; }
+    td.neg { color: var(--fear); font-weight: 700; }
+    td.pos { color: var(--greed); font-weight: 700; }
+    td.neu { color: #b8860b; font-weight: 700; }
+
+    .tag {
+      display: inline-block; padding: 1px 8px; border-radius: 999px;
+      font-size: 12px; border: 1px solid var(--line); background: #fbfdff;
+    }
+    .tag.efear, .tag.fear { color: var(--fear); border-color: #eccac6; background: #fdf4f3; }
+    .tag.neutral { color: #7a6a1f; border-color: #e6dcb8; background: #fdfbf1; }
+    .tag.greed, .tag.egreed { color: var(--greed); border-color: #c6e3d1; background: #f2fbf5; }
+
+    .footnote { padding: 0 22px 18px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+    .timeframe-bar { padding: 10px 22px 18px; border-top: 1px solid var(--line); background: #fbfcfd; }
+    .timeframe-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 8px; font-size: 13px; color: var(--muted);
+    }
+    .timeframe-track {
+      position: relative; height: 34px; border-radius: 999px;
+      background: #e3e8ee; border: 1px solid #d6dde5; overflow: hidden; cursor: pointer;
+    }
+    .timeframe-track input[type="range"] {
+      position: absolute; left: 0; top: 0; width: 100%; height: 34px;
+      margin: 0; appearance: none; background: transparent; pointer-events: none;
+    }
+    .timeframe-track input[type="range"]::-webkit-slider-thumb {
+      appearance: none; width: 16px; height: 16px; border-radius: 50%;
+      background: #ffffff; border: 2px solid var(--accent);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06); pointer-events: auto; cursor: ew-resize;
+    }
+    .timeframe-track input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%; background: #ffffff;
+      border: 2px solid var(--accent); box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+      pointer-events: auto; cursor: ew-resize;
+    }
+    .timeframe-track input[type="range"]::-webkit-slider-runnable-track { height: 34px; background: transparent; }
+    .timeframe-track input[type="range"]::-moz-range-track { height: 34px; background: transparent; border: none; }
+
+    @media (max-width: 820px) {
+      .canvas-box { height: 360px; }
+      .meta { text-align: left; }
+      table { font-size: 12px; }
+      th, td { padding: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>CNN Fear &amp; Greed Index · 252MA ±σ</h1>
+      <div class="meta" id="metaText">載入中…</div>
+    </header>
+
+    <div class="summary">
+      <div class="pill"><span class="k">最新值</span><b id="pillValue">--</b></div>
+      <div class="pill"><span class="k">分類</span><b id="pillClass">--</b></div>
+      <div class="pill"><span class="k">Z-Score · 5年</span><b id="pillZ">--</b></div>
+      <div class="pill"><span class="k">歷史百分位</span><b id="pillPct">--</b></div>
+      <div class="pill"><span class="k">5年均值 ±σ</span><b id="pillMs">--</b></div>
+    </div>
+
+    <div class="toolbar">
+      <button data-range="1Y">1Y</button>
+      <button data-range="2Y">2Y</button>
+      <button data-range="3Y">3Y</button>
+      <button data-range="5Y" class="active">5Y</button>
+      <button data-range="ALL">ALL</button>
+    </div>
+
+    <div class="canvas-box">
+      <canvas id="chart"></canvas>
+    </div>
+    <div class="canvas-box small">
+      <canvas id="zchart"></canvas>
+    </div>
+
+    <section>
+      <h2>怎麼看這張圖</h2>
+      <div class="read">
+        <ul>
+          <li><b>黑線</b>是 CNN Fear &amp; Greed Index 每日收盤值（0 = 極度恐懼，100 = 極度貪婪）。</li>
+          <li><b>藍虛線</b>是 252 個交易日（≈1 年）移動平均，代表這段時間的「情緒基準線」。</li>
+          <li><b>綠色帶</b>是均值 +1σ / +2σ / +3σ，<b>紅色帶</b>是均值 −1σ / −2σ / −3σ。指數落在帶內＝正常波動；跑出 ±2σ 外＝統計上的異常情緒。</li>
+          <li><b>下圖 Z-Score</b> 把上面那條線標準化：<code>Z =（今日值 − 252日均值）÷ 252日標準差</code>。Z 為正＝偏貪婪，Z 為負＝偏恐懼。±2σ 以外的柱子是歷史上真正極端的時刻。</li>
+          <li><b>要留意的解讀陷阱：</b>指數「35 分、標籤寫恐懼」不等於統計上極端。要同時看 Z-Score —— Z 只有 −0.7σ 的話，那只是溫和偏離，離 −2σ 的極端還很遠。</li>
+        </ul>
+      </div>
+    </section>
+
+    <section>
+      <h2>各觀察窗校準表</h2>
+      <table id="lookTable">
+        <thead>
+          <tr><th>觀察窗</th><th>交易日</th><th>均值 μ</th><th>標準差 σ</th>
+              <th>±2σ 區間</th><th>目前 Z</th><th>百分位</th></tr>
+        </thead>
+        <tbody><tr><td colspan="7">載入中…</td></tr></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>最近 15 個交易日</h2>
+      <table id="recentTable">
+        <thead>
+          <tr><th>日期 (UTC)</th><th>指數</th><th>分類</th><th>252日均值</th><th>Z-Score</th></tr>
+        </thead>
+        <tbody><tr><td colspan="5">載入中…</td></tr></tbody>
+      </table>
+    </section>
+
+    <div class="footnote">
+      資料來源：CNN Business Fear &amp; Greed Index（production.dataviz.cnn.io）· 滾動窗口 252 交易日 · std(ddof=1) ·
+      本頁每日 08:10（香港時間）自動更新。<br>
+      CNN 的日度資料點時間戳固定為 <b>00:00 UTC</b>（美東收盤後 3~5 小時），對應前一個美股交易日的收盤值；
+      週末與美股假期沒有資料點。本站自 <span id="firstDate">--</span> 起逐日累積存檔。
+    </div>
+
+    <div class="timeframe-bar">
+      <div class="timeframe-head">
+        <span>顯示區間</span>
+        <span id="timeframeLabel">--</span>
+      </div>
+      <div class="timeframe-track" id="timeframeTrack">
+        <input id="rangeStart" type="range" min="0" max="0" value="0">
+        <input id="rangeEnd" type="range" min="0" max="0" value="0">
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const rangeButtons = Array.from(document.querySelectorAll(".toolbar button"));
+    const ctx = $("chart").getContext("2d");
+    const zctx = $("zchart").getContext("2d");
+
+    const RANGES = { "1Y": 252, "2Y": 504, "3Y": 756, "5Y": 1260, "ALL": Infinity };
+    const DEF = { fear: "恐懼", greed: "貪婪", neutral: "中性" };
+
+    let fullRows = [];
+    let chart = null, zchart = null;
+    let viewStart = 0, viewEnd = 0;
+
+    const clampBand = (v) => (v === null || v === undefined || Number.isNaN(v)) ? null
+                            : Math.max(0, Math.min(100, v));
+
+    const zOf = (r) => (r.mean === null || r.std === null || !r.std)
+      ? null : (r.value - r.mean) / r.std;
+
+    function classKey(c) {
+      const s = String(c || "").toLowerCase();
+      if (s === "extreme fear") return "efear";
+      if (s === "extreme greed") return "egreed";
+      if (s === "fear" || s === "greed" || s === "neutral") return s;
+      return "";
+    }
+    function classZh(c) {
+      const k = classKey(c);
+      return { efear: "極度恐懼", fear: "恐懼", neutral: "中性",
+               greed: "貪婪", egreed: "極度貪婪" }[k] || (c || "N/A");
+    }
+
+    function pickRows(start, end) {
+      if (!fullRows.length) return [];
+      const s = Math.max(0, Math.min(start, fullRows.length - 1));
+      const e = Math.max(s, Math.min(end, fullRows.length - 1));
+      return fullRows.slice(s, e + 1);
+    }
+
+    // ---------- main chart ----------
+    function buildDatasets(rows) {
+      const d = {
+        labels: rows.map(r => r.date),
+        value: rows.map(r => r.value),
+        mean: rows.map(r => r.mean),
+        u1: rows.map(r => clampBand(r.upper1)),
+        u2: rows.map(r => clampBand(r.upper2)),
+        u3: rows.map(r => clampBand(r.upper3)),
+        l1: rows.map(r => clampBand(r.lower1)),
+        l2: rows.map(r => clampBand(r.lower2)),
+        l3: rows.map(r => clampBand(r.lower3)),
+      };
+      const flat = (label, data) => ({
+        label, data, borderWidth: 0, pointRadius: 0,
+        borderColor: "rgba(0,0,0,0)", backgroundColor: "rgba(0,0,0,0)",
+        fill: false, tension: 0.12, skipLegend: true, skipTooltip: true
+      });
+      return [
+        flat("_pos", d.mean),
+        { label: "+1σ", data: d.u1, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(74, 173, 97, 0.30)", tension: 0.12 },
+        { label: "+2σ", data: d.u2, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(74, 173, 97, 0.22)", tension: 0.12 },
+        { label: "+3σ", data: d.u3, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(74, 173, 97, 0.14)", tension: 0.12 },
+        flat("_neg", d.mean),
+        { label: "-1σ", data: d.l1, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(217, 83, 79, 0.30)", tension: 0.12 },
+        { label: "-2σ", data: d.l2, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(217, 83, 79, 0.22)", tension: 0.12 },
+        { label: "-3σ", data: d.l3, borderWidth: 0, pointRadius: 0, fill: "-1", backgroundColor: "rgba(217, 83, 79, 0.14)", tension: 0.12 },
+        { label: "252MA", data: d.mean, borderColor: "#2d5d7b", borderDash: [6, 5], pointRadius: 0, borderWidth: 2, fill: false, tension: 0.12 },
+        { label: "Fear & Greed", data: d.value, borderColor: "#111111", pointRadius: 0, borderWidth: 2, fill: false, tension: 0.12 },
+      ];
+    }
+
+    function drawMain(rows) {
+      const datasets = buildDatasets(rows);
+      const labels = rows.map(r => r.date);
+      if (chart) {
+        chart.data.labels = labels;
+        chart.data.datasets = datasets;
+        chart.update("none");
+        return;
+      }
+      chart = new Chart(ctx, {
+        type: "line",
+        data: { labels, datasets },
+        options: {
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: {
+              labels: {
+                usePointStyle: true, boxWidth: 8,
+                filter: (item, data) => !data.datasets[item.datasetIndex].skipLegend
+              }
+            },
+            tooltip: {
+              filter: (c) => !c.dataset.skipTooltip,
+              callbacks: {
+                label: (c) => `${c.dataset.label}: ${c.parsed.y === null ? "-" : c.parsed.y.toFixed(1)}`
+              }
+            }
+          },
+          scales: {
+            x: { ticks: { maxTicksLimit: 12, autoSkip: true } },
+            y: {
+              min: 0, max: 100, ticks: { stepSize: 10 },
+              title: { display: true, text: "指數 (0-100)" }
+            }
+          }
+        }
+      });
+    }
+
+    // ---------- z-score chart ----------
+    function drawZ(rows) {
+      const labels = rows.map(r => r.date);
+      const zs = rows.map(r => zOf(r));
+      const colors = zs.map(z => z === null ? "#9aa7b4" : (z >= 0 ? "rgba(46,139,87,0.75)" : "rgba(192,57,43,0.75)"));
+      const datasets = [
+        { type: "bar", label: "Z-Score", data: zs, backgroundColor: colors, borderWidth: 0, barPercentage: 1.0, categoryPercentage: 1.0 },
+        { type: "line", label: "_r2p", data: labels.map(() => 2), borderColor: "rgba(217,83,79,0.55)", borderWidth: 1, borderDash: [5, 4], pointRadius: 0, fill: false },
+        { type: "line", label: "_r1p", data: labels.map(() => 1), borderColor: "rgba(217,83,79,0.28)", borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false },
+        { type: "line", label: "_r1n", data: labels.map(() => -1), borderColor: "rgba(217,83,79,0.28)", borderWidth: 1, borderDash: [4, 4], pointRadius: 0, fill: false },
+        { type: "line", label: "_r2n", data: labels.map(() => -2), borderColor: "rgba(217,83,79,0.55)", borderWidth: 1, borderDash: [5, 4], pointRadius: 0, fill: false },
+      ];
+      const scales = {
+        x: { ticks: { maxTicksLimit: 12, autoSkip: true } },
+        y: {
+          min: -3.5, max: 3.5, ticks: { stepSize: 1 },
+          title: { display: true, text: "σ" }, grid: { color: (c) => c.tick.value === 0 ? "#c3ced8" : "#eef2f6" }
+        }
+      };
+      if (zchart) {
+        zchart.data.labels = labels;
+        zchart.data.datasets = datasets;
+        zchart.options.scales = scales;
+        zchart.update("none");
+        return;
+      }
+      zchart = new Chart(zctx, {
+        data: { labels, datasets },
+        options: {
+          maintainAspectRatio: false,
+          animation: false,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { labels: { usePointStyle: true, boxWidth: 8, filter: (i, d) => !d.datasets[i.datasetIndex].label.startsWith("_") } },
+            tooltip: {
+              callbacks: {
+                label: (c) => c.dataset.type === "bar"
+                  ? `Z-Score: ${c.parsed.y === null ? "-" : c.parsed.y.toFixed(2)}σ`
+                  : null
+              }
+            }
+          },
+          scales
+        }
+      });
+    }
+
+    // ---------- panels ----------
+    function renderLookbacks(list, stats) {
+      const tb = $("#lookTable").querySelector("tbody");
+      if (!list || !list.length) { tb.innerHTML = '<tr><td colspan="7">無資料</td></tr>'; return; }
+      tb.innerHTML = list.map(r => {
+        const cls = r.z <= -1 ? "neg" : (r.z >= 1 ? "pos" : "neu");
+        return `<tr><td>${r.label}</td><td>${r.n}</td><td>${r.mean.toFixed(1)}</td><td>${r.sd.toFixed(1)}</td>`
+          + `<td>${r.lower2.toFixed(1)} ~ ${r.upper2.toFixed(1)}</td>`
+          + `<td class="${cls}">${r.z >= 0 ? "+" : ""}${r.z.toFixed(2)}σ</td>`
+          + `<td>${r.percentile.toFixed(1)}%</td></tr>`;
+      }).join("");
+    }
+
+    function renderRecent(rows) {
+      const tb = $("#recentTable").querySelector("tbody");
+      const tail = rows.slice(-15).reverse();
+      if (!tail.length) { tb.innerHTML = '<tr><td colspan="5">無資料</td></tr>'; return; }
+      tb.innerHTML = tail.map(r => {
+        const z = zOf(r);
+        const k = classKey(r.classification);
+        const cls = z === null ? "neu" : (z <= -1 ? "neg" : (z >= 1 ? "pos" : "neu"));
+        return `<tr><td>${r.date}</td><td>${r.value.toFixed(1)}</td>`
+          + `<td><span class="tag ${k}">${classZh(r.classification)}</span></td>`
+          + `<td>${r.mean === null ? "-" : r.mean.toFixed(1)}</td>`
+          + `<td class="${cls}">${z === null ? "-" : (z >= 0 ? "+" : "") + z.toFixed(2) + "σ"}</td></tr>`;
+      }).join("");
+    }
+
+    // ---------- timeframe ----------
+    const trackEl = $("timeframeTrack");
+    const startEl = $("rangeStart");
+    const endEl = $("rangeEnd");
+
+    function updateTrack() {
+      const n = fullRows.length;
+      if (n <= 1) { trackEl.style.background = "#e3e8ee"; return; }
+      const p1 = (viewStart / (n - 1)) * 100;
+      const p2 = (viewEnd / (n - 1)) * 100;
+      trackEl.style.background =
+        `linear-gradient(to right, #e3e8ee 0%, #e3e8ee ${p1}%, #2d5d7b ${p1}%, #2d5d7b ${p2}%, #e3e8ee ${p2}%, #e3e8ee 100%)`;
+    }
+
+    function updateLabel() {
+      if (!fullRows.length) { $("timeframeLabel").textContent = "--"; return; }
+      const from = fullRows[viewStart].date, to = fullRows[viewEnd].date;
+      $("timeframeLabel").textContent = `${from} ~ ${to}（${viewEnd - viewStart + 1} 個交易日）`;
+    }
+
+    function syncButtons() {
+      const n = fullRows.length;
+      let active = "";
+      if (viewEnd === n - 1) {
+        for (const [name, days] of Object.entries(RANGES)) {
+          if (days === Infinity) continue;
+          if (viewStart === Math.max(0, n - days)) { active = name; break; }
+        }
+        if (!active && viewStart === 0) active = "ALL";
+      }
+      rangeButtons.forEach(b => b.classList.toggle("active", b.dataset.range === active));
+    }
+
+    function updateControls() {
+      const max = Math.max(0, fullRows.length - 1);
+      startEl.max = endEl.max = String(max);
+      startEl.value = String(viewStart);
+      endEl.value = String(viewEnd);
+      updateTrack(); updateLabel(); syncButtons();
+    }
+
+    function refresh() {
+      const rows = pickRows(viewStart, viewEnd);
+      drawMain(rows);
+      drawZ(rows);
+    }
+
+    function setWindow(s, e) {
+      const n = fullRows.length;
+      if (!n) return;
+      const min = Math.min(10, n);
+      let a = Math.max(0, Math.min(s, n - 1));
+      let b = Math.max(0, Math.min(e, n - 1));
+      if (b - a + 1 < min) {
+        if (a + min - 1 <= n - 1) b = a + min - 1; else a = Math.max(0, b - min + 1);
+      }
+      viewStart = a; viewEnd = b;
+      updateControls(); refresh();
+    }
+
+    function setByName(name) {
+      const n = fullRows.length;
+      if (!n) return;
+      const days = RANGES[name];
+      setWindow(days === Infinity ? 0 : Math.max(0, n - days), n - 1);
+    }
+
+    // ---------- boot ----------
+    async function boot() {
+      const res = await fetch("./fng_data.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const payload = await res.json();
+      fullRows = Array.isArray(payload.rows) ? payload.rows : [];
+      if (!fullRows.length) throw new Error("fng_data.json 沒有資料列");
+
+      const live = payload.live || {};
+      const st = payload.stats || {};
+      const s = live.value !== undefined && live.value !== null ? live.value : st.settled_value;
+
+      $("pillValue").textContent = `${s}`;
+      $("pillClass").textContent = live.classification_zh || classZh(live.classification);
+      $("pillZ").textContent = `${st.z >= 0 ? "+" : ""}${st.z}σ`;
+      $("pillPct").textContent = `${st.percentile}%`;
+      $("pillMs").textContent = `${st.mean} ± ${st.sd}`;
+      $("firstDate").textContent = st.first || fullRows[0].date;
+
+      const asOf = (live.as_of || payload.generated_utc || "").replace("T", " ").replace("Z", " UTC");
+      $("metaText").innerHTML =
+        `資料日期：${payload.updated}　·　讀數時間：${asOf}<br>`
+        + `區間 ${st.first} ~ ${st.last}　·　共 ${st.n} 個交易日`;
+
+      renderLookbacks(payload.lookbacks, st);
+      renderRecent(fullRows);
+
+      setByName("5Y");
+    }
+
+    rangeButtons.forEach(b => b.addEventListener("click", () => setByName(b.dataset.range)));
+    startEl.addEventListener("input", () => setWindow(Number(startEl.value), viewEnd));
+    endEl.addEventListener("input", () => setWindow(viewStart, Number(endEl.value)));
+    trackEl.addEventListener("pointerdown", (ev) => {
+      if (ev.target === startEl || ev.target === endEl || !fullRows.length) return;
+      const rect = trackEl.getBoundingClientRect();
+      const ratio = Math.max(0, Math.min(1, (ev.clientX - rect.left) / Math.max(1, rect.width)));
+      const idx = Math.round(ratio * (fullRows.length - 1));
+      const span = viewEnd - viewStart;
+      let a = idx - Math.floor(span / 2), b = a + span;
+      if (a < 0) { a = 0; b = span; }
+      if (b > fullRows.length - 1) { b = fullRows.length - 1; a = Math.max(0, b - span); }
+      setWindow(a, b);
+    });
+
+    boot().catch(err => {
+      $("metaText").textContent = `錯誤：${err.message}`;
+      console.error(err);
+    });
+  </script>
+</body>
+</html>
