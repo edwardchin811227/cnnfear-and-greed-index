@@ -8,7 +8,7 @@
     3
   ],
   "live": {
-    "value": 35.11,
+    "value": 34.69,
     "classification": "fear",
     "classification_zh": "恐懼",
     "as_of": "2026-09-23",
@@ -26,12 +26,12 @@
     "median": 49.5,
     "min": 2.9,
     "max": 83.0,
-    "z": -0.68,
-    "percentile": 27.3,
-    "settled_value": 35.11,
+    "z": -0.71,
+    "percentile": 27.2,
+    "settled_value": 34.69,
     "settled_date": "2026-09-23",
     "settled_classification": "fear",
-    "settled_z": -0.43
+    "settled_z": -0.46
   },
   "lookbacks": [
     {
@@ -43,20 +43,20 @@
       "upper1": 58.4,
       "lower2": 9.7,
       "upper2": 74.6,
-      "z": -0.43,
-      "percentile": 35.7
+      "z": -0.46,
+      "percentile": 35.3
     },
     {
       "label": "2 年",
       "n": 504,
       "mean": 45.94,
       "sd": 18.29,
-      "lower1": 27.7,
+      "lower1": 27.6,
       "upper1": 64.2,
       "lower2": 9.4,
       "upper2": 82.5,
-      "z": -0.59,
-      "percentile": 31.0
+      "z": -0.62,
+      "percentile": 30.8
     },
     {
       "label": "3 年",
@@ -65,10 +65,10 @@
       "sd": 18.12,
       "lower1": 30.1,
       "upper1": 66.3,
-      "lower2": 12.0,
+      "lower2": 11.9,
       "upper2": 84.4,
-      "z": -0.72,
-      "percentile": 25.8
+      "z": -0.74,
+      "percentile": 25.7
     },
     {
       "label": "5 年",
@@ -79,8 +79,8 @@
       "upper1": 66.7,
       "lower2": 10.4,
       "upper2": 85.5,
-      "z": -0.68,
-      "percentile": 27.3
+      "z": -0.71,
+      "percentile": 27.2
     }
   ],
   "rows": [
@@ -19729,29 +19729,29 @@
     },
     {
       "date": "2026-09-22",
-      "value": 35.1143,
+      "value": 35.0286,
       "classification": "fear",
-      "mean": 42.285204,
-      "std": 16.28682,
-      "upper1": 58.572025,
-      "lower1": 25.998384,
-      "upper2": 74.858845,
-      "lower2": 9.711563,
-      "upper3": 91.145665,
-      "lower3": -6.575257
+      "mean": 42.284864,
+      "std": 16.286972,
+      "upper1": 58.571836,
+      "lower1": 25.997892,
+      "upper2": 74.858807,
+      "lower2": 9.710921,
+      "upper3": 91.145779,
+      "lower3": -6.576051
     },
     {
       "date": "2026-09-23",
-      "value": 35.1143,
+      "value": 34.6857,
       "classification": "fear",
-      "mean": 42.161735,
-      "std": 16.222394,
-      "upper1": 58.384129,
-      "lower1": 25.93934,
-      "upper2": 74.606523,
-      "lower2": 9.716946,
-      "upper3": 90.828918,
-      "lower3": -6.505448
+      "mean": 42.159694,
+      "std": 16.223308,
+      "upper1": 58.383002,
+      "lower1": 25.936386,
+      "upper2": 74.606309,
+      "lower2": 9.713078,
+      "upper3": 90.829617,
+      "lower3": -6.510229
     }
   ]
 }
