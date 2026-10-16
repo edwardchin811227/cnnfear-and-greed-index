@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-14",
+  "updated": "2026-10-15",
   "source": "CNN Business — Fear & Greed Index",
   "window": 252,
   "z_levels": [
@@ -8,79 +8,79 @@
     3
   ],
   "live": {
-    "value": 32.42,
+    "value": 31.54,
     "classification": "fear",
     "classification_zh": "恐懼",
-    "as_of": "2026-10-14",
-    "previous_close": 44.74,
-    "previous_1_week": 42.14,
-    "previous_1_month": 30.97,
-    "previous_1_year": 28.29
+    "as_of": "2026-10-15",
+    "previous_close": 32.33,
+    "previous_1_week": 39.8,
+    "previous_1_month": 27.97,
+    "previous_1_year": 27.41
   },
   "stats": {
     "n": 1260,
-    "first": "2021-10-06",
-    "last": "2026-10-14",
+    "first": "2021-10-07",
+    "last": "2026-10-15",
     "mean": 48.2,
-    "sd": 18.52,
+    "sd": 18.51,
     "median": 49.5,
     "min": 2.9,
     "max": 83.0,
-    "z": -0.85,
-    "percentile": 22.9,
-    "settled_value": 32.42,
-    "settled_date": "2026-10-14",
+    "z": -0.9,
+    "percentile": 21.9,
+    "settled_value": 31.54,
+    "settled_date": "2026-10-15",
     "settled_classification": "fear",
-    "settled_z": -0.56
+    "settled_z": -0.61
   },
   "lookbacks": [
     {
       "label": "1 年",
       "n": 252,
-      "mean": 41.35,
-      "sd": 16.04,
+      "mean": 41.33,
+      "sd": 16.05,
       "lower1": 25.3,
       "upper1": 57.4,
-      "lower2": 9.3,
+      "lower2": 9.2,
       "upper2": 73.4,
-      "z": -0.56,
-      "percentile": 28.6
+      "z": -0.61,
+      "percentile": 27.0
     },
     {
       "label": "2 年",
       "n": 504,
-      "mean": 45.07,
-      "sd": 17.95,
-      "lower1": 27.1,
-      "upper1": 63.0,
-      "lower2": 9.2,
-      "upper2": 81.0,
-      "z": -0.7,
-      "percentile": 26.0
+      "mean": 44.98,
+      "sd": 17.94,
+      "lower1": 27.0,
+      "upper1": 62.9,
+      "lower2": 9.1,
+      "upper2": 80.9,
+      "z": -0.75,
+      "percentile": 24.8
     },
     {
       "label": "3 年",
       "n": 756,
-      "mean": 48.31,
+      "mean": 48.3,
       "sd": 17.99,
       "lower1": 30.3,
       "upper1": 66.3,
       "lower2": 12.3,
       "upper2": 84.3,
-      "z": -0.88,
-      "percentile": 20.5
+      "z": -0.93,
+      "percentile": 19.2
     },
     {
       "label": "5 年",
       "n": 1260,
       "mean": 48.2,
-      "sd": 18.52,
+      "sd": 18.51,
       "lower1": 29.7,
       "upper1": 66.7,
       "lower2": 11.2,
       "upper2": 85.2,
-      "z": -0.85,
-      "percentile": 22.9
+      "z": -0.9,
+      "percentile": 21.9
     }
   ],
   "rows": [
@@ -19937,16 +19937,29 @@
     },
     {
       "date": "2026-10-14",
-      "value": 32.4203,
+      "value": 26.6567,
       "classification": "fear",
-      "mean": 41.34821,
-      "std": 16.035255,
-      "upper1": 57.383465,
-      "lower1": 25.312954,
-      "upper2": 73.418721,
-      "lower2": 9.277699,
-      "upper3": 89.453976,
-      "lower3": -6.757557
+      "mean": 41.325338,
+      "std": 16.052142,
+      "upper1": 57.37748,
+      "lower1": 25.273197,
+      "upper2": 73.429622,
+      "lower2": 9.221055,
+      "upper3": 89.481764,
+      "lower3": -6.831087
+    },
+    {
+      "date": "2026-10-15",
+      "value": 31.5429,
+      "classification": "fear",
+      "mean": 41.332481,
+      "std": 16.047367,
+      "upper1": 57.379848,
+      "lower1": 25.285114,
+      "upper2": 73.427215,
+      "lower2": 9.237747,
+      "upper3": 89.474582,
+      "lower3": -6.80962
     }
   ]
 }
